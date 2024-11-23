@@ -1,68 +1,44 @@
-import numpy as np
 import pandas as pd
+import numpy as np
 from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder
 import matplotlib.pyplot as plt
 
-# Data mahasiswa
-students = {
-    "nama": ["Andi", "Budi", "Citra", "Dewi", "Eka", "Fajar", "Gita"],
-    "nilai": [85, 70, 78, 90, 88, 76, 95],
-    "metode_belajar": [1, 2, 1, 3, 2, 3, 1]  # 1: Visual, 2: Auditori, 3: Kinestetik
+# Data contoh
+data = {
+    'nama': ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve'],
+    'ipk': [3.8, 2.5, 3.0, 2.8, 3.5],
+    'metode_belajar': ['visual', 'audio', 'kinetik', 'visual', 'audio']
 }
 
 # Membuat DataFrame
-df = pd.DataFrame(students)
+df = pd.DataFrame(data)
 
-# Menggabungkan data nilai dan metode belajar untuk klustering
-X = df[["nilai", "metode_belajar"]].values
+# One-Hot Encoding untuk metode_belajar
+encoder = OneHotEncoder()
+encoded_metode = encoder.fit_transform(df[['metode_belajar']]).toarray()
+encoded_columns = encoder.get_feature_names_out(['metode_belajar'])
 
-# Normalisasi data
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
+# Menggabungkan hasil encoding ke DataFrame utama
+encoded_df = pd.DataFrame(encoded_metode, columns=encoded_columns)
+df = pd.concat([df, encoded_df], axis=1)
+
+# Menghapus kolom metode_belajar asli
+df.drop(columns=['metode_belajar'], inplace=True)
+
+# Menyiapkan data untuk clustering
+X = df[['ipk'] + list(encoded_columns)]
 
 # Menentukan jumlah kluster
-num_clusters = 3
-kmeans = KMeans(n_clusters=num_clusters, random_state=42)
+kmeans = KMeans(n_clusters=3, random_state=42)
+df['cluster'] = kmeans.fit_predict(X)
 
-# Melakukan klustering
-kmeans.fit(X_scaled)
-
-# Menambahkan hasil kluster ke DataFrame
-df["kluster"] = kmeans.labels_
-
-# Mapping metode belajar untuk keterbacaan
-metode_mapping = {1: "Visual", 2: "Auditori", 3: "Kinestetik"}
-df["metode_belajar"] = df["metode_belajar"].map(metode_mapping)
-
-# Menampilkan hasil
-print("Centroid kluster:")
-print(kmeans.cluster_centers_)
-print("\nData mahasiswa dengan kluster:")
+# Menampilkan hasil clustering
+print("Hasil Clustering:")
 print(df)
 
-# Visualisasi hasil
-plt.figure(figsize=(8, 6))
-colors = ["red", "blue", "green"]
-
-for cluster in range(num_clusters):
-    cluster_points = df[df["kluster"] == cluster]
-    plt.scatter(
-        cluster_points["nilai"],
-        cluster_points.index,  # Menggunakan index untuk plot kategori
-        label=f"Kluster {cluster + 1}",
-        color=colors[cluster]
-    )
-
-plt.scatter(
-    kmeans.cluster_centers_[:, 0],
-    kmeans.cluster_centers_[:, 1],
-    s=200, c="yellow", marker="X", label="Centroid"
-)
-
-plt.title("Hasil Klustering Mahasiswa")
-plt.xlabel("Nilai")
-plt.ylabel("Metode Belajar")
-plt.legend()
-plt.grid(True)
+# Visualisasi hasil clustering (berbasis IPK saja)
+plt.scatter(df['ipk'], np.zeros_like(df['ipk']), c=df['cluster'], cmap='viridis', s=100)
+plt.xlabel('IPK')
+plt.title('Klustering Mahasiswa Berdasarkan IPK dan Metode Belajar')
 plt.show()
