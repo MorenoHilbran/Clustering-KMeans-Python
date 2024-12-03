@@ -8,52 +8,19 @@
 </head>
 <body>
 <div class="container mt-5">
-    <h1 class="text-center">Clustering Mahasiswa</h1>
-    <form id="clustering-form">
+    <h1 class="text-center">Clustering Mahasiswa Berdasarkan Nilai dan Metode Belajar (VAK)</h1>
+    <form id="upload-form" enctype="multipart/form-data">
         <div class="mb-3">
-            <label for="rows" class="form-label">Jumlah Siswa</label>
-            <input type="number" class="form-control" id="rows" name="rows" required>
+            <label for="file" class="form-label">Unggah File CSV</label>
+            <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
         </div>
-        <div class="mb-3">
-            <label for="columns" class="form-label">Jumlah Mata Pelajaran</label>
-            <input type="number" class="form-control" id="columns" name="columns" required>
-        </div>
-        <div id="dynamic-fields" class="mt-3"></div>
-<button type="button" class="btn btn-primary mt-3" onclick="generateFields()">Generate Fields</button>
-<button type="submit" class="btn btn-success mt-3">Proses</button>
+        <button type="submit" class="btn btn-success mt-3">Proses</button>
+    </form>
+    <div id="result" class="mt-4"></div>
+</div>
 
 <script>
-    function generateFields() {
-        const rows = document.getElementById("rows").value;
-        const columns = document.getElementById("columns").value;
-        const dynamicFields = document.getElementById("dynamic-fields");
-        dynamicFields.innerHTML = ""; // Clear previous inputs
-
-        for (let i = 0; i < rows; i++) {
-            const group = document.createElement("div");
-            group.className = "mb-3";
-            group.innerHTML = `
-                <label class="form-label">Data Siswa ${i + 1}</label>
-                <div class="input-group mb-2">
-                    <span class="input-group-text">Nilai Mata Pelajaran</span>
-                    ${Array.from({ length: columns }).map((_, idx) => 
-                        `<input type="number" class="form-control" name="nilai_${i + 1}" placeholder="MP${idx + 1}" required>`).join("")}
-                </div>
-                <div class="mb-2">
-                    <label class="form-label">Metode Belajar</label>
-                    <select name="metode_${i + 1}" class="form-select" required>
-                        <option value="" disabled selected>Pilih Metode Belajar</option>
-                        <option value="1">Visual</option>
-                        <option value="2">Auditori</option>
-                        <option value="3">Kinestetik</option>
-                    </select>
-                </div>
-            `;
-            dynamicFields.appendChild(group);
-        }
-    }
-
-    document.getElementById("clustering-form").addEventListener("submit", async function (e) {
+    document.getElementById("upload-form").addEventListener("submit", async function (e) {
         e.preventDefault();
         const formData = new FormData(this);
         const response = await fetch('/process', {
@@ -70,6 +37,37 @@
                 <h3>Hasil Klustering</h3>
                 <pre>${JSON.stringify(data.result, null, 2)}</pre>
                 <p>Silhouette Score: ${data.silhouette_score}</p>
+
+                <h3>Kesimpulan Cluster</h3>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Cluster</th>
+                            <th>Jumlah Mahasiswa</th>
+                            <th>Metode Belajar Dominan</th>
+                            <th>Jumlah Visual</th>
+                            <th>Jumlah Auditori</th>
+                            <th>Jumlah Kinestetik</th>
+                            <th>Performa Rata-Rata</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Object.keys(data.cluster_summary).map(clusterNum => `
+                            <tr>
+                                <td>${clusterNum}</td>
+                                <td>${data.cluster_summary[clusterNum].jumlah_mahasiswa}</td>
+                                <td>${data.cluster_summary[clusterNum].metode_belajar_dominan}</td>
+                                <td>${data.cluster_summary[clusterNum].jumlah_metode_belajar.Visual}</td>
+                                <td>${data.cluster_summary[clusterNum].jumlah_metode_belajar.Auditori}</td>
+                                <td>${data.cluster_summary[clusterNum].jumlah_metode_belajar.Kinestetik}</td>
+                                <td>${data.cluster_summary[clusterNum].performa_rata_rata}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+
+                <h3>Visualisasi Clustering</h3>
+                <img src="${data.plot_url}" alt="Cluster Plot" class="img-fluid">
             `;
         }
     });
