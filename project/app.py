@@ -72,13 +72,22 @@ def process():
         pca = PCA(n_components=2)
         pca_components = pca.fit_transform(X_scaled)
         
-        # Visualisasi Clustering dengan PCA
+        # Visualisasi Clustering dengan KMeans dan PCA
         plt.figure(figsize=(10, 6))
-        sns.scatterplot(x=pca_components[:, 0], y=pca_components[:, 1], hue=df['Cluster'], palette='viridis', s=100)
-        plt.title('Visualisasi Clustering Berdasarkan Nilai dan Metode Belajar (PCA)')
+
+        # Menambahkan plot KMeans dengan warna berbeda untuk setiap cluster
+        sns.scatterplot(x=pca_components[:, 0], y=pca_components[:, 1], hue=df['Cluster'], palette='viridis', s=100, marker='o')
+
+        # Menambahkan centroids ke dalam plot (pusat cluster)
+        centroids = kmeans.cluster_centers_
+        centroids_pca = pca.transform(centroids)  # Mengubah pusat cluster ke dalam komponen PCA
+        plt.scatter(centroids_pca[:, 0], centroids_pca[:, 1], c='red', s=200, marker='X', label='Centroids')
+
+        plt.title('Visualisasi Clustering Berdasarkan Nilai dan Metode Belajar (KMeans)')
         plt.xlabel('PCA Komponen 1')
         plt.ylabel('PCA Komponen 2')
-        
+        plt.legend()
+
         img_stream = BytesIO()
         plt.savefig(img_stream, format='png')
         img_stream.seek(0)
