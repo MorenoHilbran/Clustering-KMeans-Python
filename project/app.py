@@ -35,8 +35,7 @@ def process():
         
         df.columns = df.columns.str.strip()
 
-        expected_columns = ['Nama', 'Mata_Pelajaran_1', 'Mata_Pelajaran_2', 'Mata_Pelajaran_3',
-                            'Mata_Pelajaran_4', 'Mata_Pelajaran_5', 'Visual', 'Auditori', 'Kinestetik']
+        expected_columns = ['Nama', 'Mata_Pelajaran_1', 'Mata_Pelajaran_2', 'Mata_Pelajaran_3','Mata_Pelajaran_4', 'Mata_Pelajaran_5', 'Visual', 'Auditori', 'Kinestetik']
         if not all(col in df.columns for col in expected_columns):
             return jsonify({"error": f"File CSV harus memiliki kolom: {', '.join(expected_columns)}."})
         
