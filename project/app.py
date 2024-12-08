@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, request, jsonify
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -53,6 +52,20 @@ def process():
         # Pastikan kolom metode belajar diubah menjadi numerik (0/1)
         for col in ['Visual', 'Auditori', 'Kinestetik']:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(int)
+
+        # Visualisasi Data Sebelum Clustering
+        plt.figure(figsize=(10, 6))
+        sns.scatterplot(x=df.index, y=df['Nilai_Rata_Rata'], palette='viridis', s=100, marker='o')
+        plt.title('Data Sebelum Clustering')
+        plt.xlabel('Indeks Mahasiswa')
+        plt.ylabel('Nilai Rata-Rata')
+        plt.legend()
+
+        pre_cluster_img_stream = BytesIO()
+        plt.savefig(pre_cluster_img_stream, format='png')
+        pre_cluster_img_stream.seek(0)
+        pre_cluster_img_base64 = base64.b64encode(pre_cluster_img_stream.getvalue()).decode('utf-8')
+        plt.close()
 
         # Lakukan clustering hanya berdasarkan Nilai_Rata_Rata
         scaler = StandardScaler()
@@ -114,6 +127,7 @@ def process():
             "result": result, 
             "silhouette_score": silhouette, 
             "plot_url": f"data:image/png;base64,{img_base64}", 
+            "pre_cluster_plot_url": f"data:image/png;base64,{pre_cluster_img_base64}",
             "cluster_summary": cluster_summary
         })
     
